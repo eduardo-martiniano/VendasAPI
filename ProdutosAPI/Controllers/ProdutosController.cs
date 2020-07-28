@@ -4,10 +4,10 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Rewrite.Internal.ApacheModRewrite;
 using Microsoft.EntityFrameworkCore;
 using ProdutosAPI.Data;
 using ProdutosAPI.Models;
-
 
 namespace ProdutosAPI.Controllers
 {
@@ -15,9 +15,7 @@ namespace ProdutosAPI.Controllers
     [ApiController]
     public class ProdutosController : ControllerBase
     {
-
         private DatabaseContext _db;
-
         public ProdutosController(DatabaseContext db)
         {
             _db = db;
@@ -25,13 +23,9 @@ namespace ProdutosAPI.Controllers
         [HttpGet]
         public IEnumerable<ProdutoResumido> Get()
         {
-            List<ProdutoResumido> produtos = new List<ProdutoResumido>();
-            foreach (var item in _db.Produtos)
-            {
-                ProdutoResumido novoProduto = new ProdutoResumido(item.nome, item.valor_unitario, item.qtde_estoque);
-                produtos.Add(novoProduto);
-            }
+            var produtos = listarProdutos();
             return produtos;
+
         }
 
         [HttpGet("{id}")]
@@ -46,7 +40,7 @@ namespace ProdutosAPI.Controllers
 
             if (produto == null)
             {
-                return NotFound();
+                return BadRequest("Ocorreu um erro desconhecido!");
             }
 
             return Ok(produto);
@@ -58,7 +52,11 @@ namespace ProdutosAPI.Controllers
             {
                 _db.Add(produto);
                 _db.SaveChanges();
-                return Ok("Produto cadastrado com sucesso!");
+                return Ok("Produto cadastrado!");
+            }
+            else if (!ModelState.IsValid)
+            {
+                return BadRequest("Os valores informados não são validos!");
             }
             else
             {
@@ -84,7 +82,17 @@ namespace ProdutosAPI.Controllers
             _db.Produtos.Remove(produto);
             await _db.SaveChangesAsync();
 
-            return Ok(produto);
+            return Ok("Produto removido com sucesso!");
+        }
+        public IEnumerable<ProdutoResumido> listarProdutos()
+        {
+            List<ProdutoResumido> produtos = new List<ProdutoResumido>();
+            foreach (var item in _db.Produtos)
+            {
+                ProdutoResumido novoProduto = new ProdutoResumido(item.nome, item.valor_unitario, item.qtde_estoque);
+                produtos.Add(novoProduto);
+            }
+            return produtos;
         }
     }
 }
