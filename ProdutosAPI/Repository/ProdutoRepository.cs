@@ -15,9 +15,14 @@ namespace ProdutosAPI.Repository
             _db = db;
 
         }
-
-        public void baixaNoProduto(int id, DateTime data)
+        public ProdutoRepository()
         {
+                
+        }
+
+        public void baixaNoProduto(int id)
+        {
+            DateTime data = DateTime.Now;
             Produto p = _db.Produtos.Find(id);
             p.data_ultima_venda = data;
             p.qtde_estoque = p.qtde_estoque - 1;

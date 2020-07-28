@@ -16,7 +16,7 @@ namespace ProdutosAPI.Models
         public float valor_unitario { get; set; }
         [Required(ErrorMessage = "A Propriedade Quantidade em estoque é obrigatoria!")]
         public int qtde_estoque { get; set; }
-        public DateTime data_ultima_venda { get; set; }
+        public DateTime? data_ultima_venda { get; set; }
         public float valor_ultima_venda { get; set; }
 
     }
