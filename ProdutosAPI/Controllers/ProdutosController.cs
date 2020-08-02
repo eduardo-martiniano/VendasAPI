@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Rewrite.Internal.ApacheModRewrite;
 using Microsoft.EntityFrameworkCore;
 using ProdutosAPI.Data;
 using ProdutosAPI.Models;
+using ProdutosAPI.Repositories.Contracts;
+using Remotion.Linq.Utilities;
 
 namespace ProdutosAPI.Controllers
 {
@@ -15,84 +17,62 @@ namespace ProdutosAPI.Controllers
     [ApiController]
     public class ProdutosController : ControllerBase
     {
-        private DatabaseContext _db;
-        public ProdutosController(DatabaseContext db)
+        private IProdutoRepository _repository;
+        public ProdutosController(IProdutoRepository repository)
         {
-            _db = db;
+            _repository = repository;
         }
         [HttpGet]
         public IEnumerable<ProdutoResumido> Get()
         {
-            var produtos = listarProdutos();
+            var produtos = _repository.listarProdutos();
             return produtos;
-
         }
 
         [HttpGet("{id}")]
-        public async Task<IActionResult> GetProduto([FromRoute] int id)
+        public IActionResult GetProduto([FromRoute] int id)
         {
-            if (!ModelState.IsValid)
+            if (_repository.GetProduto(id) == null)
             {
-                return BadRequest("Ocorreu um erro desconhecido!");
+                return NotFound("Talvez o Produto não exista!");
             }
 
-            var produto = await _db.Produtos.FindAsync(id);
-
-            if (produto == null)
-            {
-                return BadRequest("Ocorreu um erro desconhecido!");
-            }
-
+            var produto = _repository.GetProduto(id);
             return Ok(produto);
         }
+
         [HttpPost]
         public IActionResult Post([FromBody] Produto produto)
         {
             if (ModelState.IsValid)
             {
-                _db.Add(produto);
-                _db.SaveChanges();
-                return Ok("Produto cadastrado!");
+                _repository.Cadastrar(produto);
+                return Ok("Produto cadastrado com sucesso!");
             }
-            else if (!ModelState.IsValid)
-            {
-                return BadRequest("Os valores informados não são validos!");
-            }
-            else
-            {
-                return BadRequest("Ocorreu um erro desconhecido");
-            }
+            return BadRequest();
 
         }
 
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteProduto([FromRoute] int id)
+        public IActionResult DeleteProduto([FromRoute] int id)
         {
-            if (!ModelState.IsValid)
+            if (_repository.GetProduto(id) == null)
             {
-                return BadRequest(ModelState);
+                return NotFound("Talvez o Produto não exista!");
             }
-
-            var produto = await _db.Produtos.FindAsync(id);
-            if (produto == null)
-            {
-                return NotFound();
-            }
-
-            _db.Produtos.Remove(produto);
-            await _db.SaveChangesAsync();
-
+            _repository.DeleteProduto(id);
             return Ok("Produto removido com sucesso!");
         }
-        public IEnumerable<ProdutoResumido> listarProdutos()
+        [HttpPut("{id}")]
+        public IActionResult EditarProduto(int id, [FromBody] Produto produto)
         {
-            List<ProdutoResumido> produtos = new List<ProdutoResumido>();
-            foreach (var item in _db.Produtos)
+            if (_repository.GetProduto(id) == null)
             {
-                ProdutoResumido novoProduto = new ProdutoResumido(item.nome, item.valor_unitario, item.qtde_estoque);
-                produtos.Add(novoProduto);
+                return NotFound("Talvez o Produto não exista!");
             }
-            return produtos;
+            _repository.EditarProduto(id, produto);
+            return Ok("Produto editado com sucesso!");
         }
+        
     }
 }
