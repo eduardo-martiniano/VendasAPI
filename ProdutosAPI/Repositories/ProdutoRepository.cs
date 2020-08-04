@@ -39,8 +39,11 @@ namespace ProdutosAPI.Repositories
         }
         public void EditarProduto(int id, Produto produto)
         {
-            produto.produto_id = id;
-            _db.Produtos.Update(produto);
+            var p = _db.Produtos.Find(id);
+            p.nome = produto.nome;
+            p.valor_unitario = produto.valor_unitario;
+            p.qtde_estoque = produto.qtde_estoque;
+            _db.Produtos.Update(p);
             _db.SaveChanges();
         }
 
